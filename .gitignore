@@ -1,0 +1,23 @@
+# Ambiente Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# UV
+.python-version
+
+# Dados (não versionar dados brutos)
+data/
+
+# Variáveis de ambiente (NUNCA commitar credenciais)
+.env
+
+# VSCode
+.vscode/
+
+# Sistema
+.DS_Store
+*.log
