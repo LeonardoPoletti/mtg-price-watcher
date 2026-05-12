@@ -1,20 +1,79 @@
+# pyproject.toml — configuração central do projeto MTG Price Watcher
+# Padrão PEP 621 gerenciado pelo UV
+
 [project]
 name = "mtg-price-watcher"
 version = "0.1.0"
-description = "Add your description here"
+description = "Pipeline de dados de preços de cartas MTG usando Scryfall API, DuckDB e Streamlit"
 readme = "README.md"
 requires-python = ">=3.12"
+authors = [
+    { name = "Leonardo Jose Poletti", email = "leonardojpoletti@gmail.com" }
+]
+keywords = ["data-engineering", "mtg", "duckdb", "streamlit", "scryfall"]
+
+
+# Dependências de produção — o que o projeto precisa para rodar
 dependencies = [
-    "duckdb>=1.5.2",
-    "httpx>=0.28.1",
-    "plotly>=6.7.0",
-    "pydantic>=2.13.4",
-    "python-dotenv>=1.2.2",
-    "streamlit>=1.57.0",
+    "duckdb>=1.5.2",        # banco analítico embarcado — processa Parquet sem servidor
+    "httpx>=0.28.1",        # cliente HTTP moderno — substitui requests
+    "plotly>=6.7.0",        # gráficos interativos no Streamlit
+    "pydantic>=2.13.4",     # validação de dados na entrada da API
+    "python-dotenv>=1.2.2", # carrega variáveis do arquivo .env
+    "streamlit>=1.57.0",    # dashboard em Python puro
 ]
 
+# Dependências de desenvolvimento — só para quem está desenvolvendo
 [dependency-groups]
 dev = [
-    "pytest>=9.0.3",
-    "ruff>=0.15.12",
+    "pytest>=9.0.3",   # framework de testes
+    "ruff>=0.15.12",   # linter + formatter (substitui flake8 + black + isort)
 ]
+
+# ─────────────────────────────────────────────
+# CONFIGURAÇÃO DO RUFF
+# ─────────────────────────────────────────────
+[tool.ruff]
+# Comprimento máximo de linha — 88 é o padrão do Black, amplamente adotado
+line-length = 88
+
+# Versão mínima do Python alvo — afeta como o Ruff interpreta o código
+target-version = "py312"
+
+# Arquivos e pastas que o Ruff deve ignorar
+exclude = [
+    ".venv",
+    ".git",
+    "__pycache__",
+    "data",
+    "docs",
+]
+
+[tool.ruff.lint]
+# Regras ativas:
+# E = erros de estilo PEP8
+# F = erros do Pyflakes (variáveis não usadas, imports não usados, etc.)
+# I = ordenação de imports (substitui isort)
+# UP = modernização de código Python (usa f-strings, etc.)
+select = ["E", "F", "I", "UP"]
+
+# Regras ignoradas:
+# E501 = linha muito longa (já controlamos pelo line-length acima)
+ignore = ["E501"]
+
+[tool.ruff.format]
+# Estilo de aspas: duplas (padrão Black)
+quote-style = "double"
+
+# Indentação: 4 espaços (padrão Python)
+indent-style = "space"
+
+# ─────────────────────────────────────────────
+# CONFIGURAÇÃO DO PYTEST
+# ─────────────────────────────────────────────
+[tool.pytest.ini_options]
+# Onde o Pytest procura os testes
+testpaths = ["tests"]
+
+# Mostra saída detalhada nos testes
+addopts = "-v"
