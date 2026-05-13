@@ -21,3 +21,6 @@ data/
 # Sistema
 .DS_Store
 *.log
+
+# Exploração, experimentos, testes manuais
+notebooks/
