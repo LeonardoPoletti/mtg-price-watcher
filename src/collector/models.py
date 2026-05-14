@@ -6,7 +6,6 @@ Nada que vem da API entra no sistema sem passar por aqui.
 """
 
 from datetime import date
-from typing import Optional
 
 from pydantic import BaseModel, field_validator
 
@@ -15,17 +14,18 @@ from pydantic import BaseModel, field_validator
 # Representa o objeto "prices" dentro de cada carta da Scryfall
 # ─────────────────────────────────────────────────────────────
 
+
 class CardPrices(BaseModel):
     """Preços de uma carta em diferentes versões e moedas."""
 
-    usd: Optional[float] = None       # preço normal em dólar
-    usd_foil: Optional[float] = None  # preço foil em dólar 
-    eur: Optional[float] = None       # preço normal em euro
-    eur_foil: Optional[float] = None  # preço foil em euro
+    usd: float | None = None  # preço normal em dólar
+    usd_foil: float | None = None  # preço foil em dólar
+    eur: float | None = None  # preço normal em euro
+    eur_foil: float | None = None  # preço foil em euro
 
     @field_validator("usd", "usd_foil", "eur", "eur_foil", mode="before")
     @classmethod
-    def coverter_preco(cls, valor):
+    def converter_preco(cls, valor):
         """
         Converte string para float antes da validação.
 
@@ -39,7 +39,8 @@ class CardPrices(BaseModel):
         try:
             return float(valor)
         except (ValueError, TypeError):
-            return None   # se vier algo inesperado, trata como sem preço
+            return None  # se vier algo inesperado, trata como sem preço
+
 
 # ─────────────────────────────────────────────────────────────
 # MODELO 2: Carta completa da Scryfall
@@ -47,27 +48,29 @@ class CardPrices(BaseModel):
 # Ignoramos os outros 70+ campos que a API retorna
 # ─────────────────────────────────────────────────────────────
 
+
 class ScryfallCard(BaseModel):
     """
     Representa uma carta MTG conforme retornada pela Scryfall API.
     Contém apenas os campos relevantes para o pipeline de preços.
     """
 
-    id: str                           # UUID único da carta na Scryfall
-    name: str                         # nome da carta
-    set: str                          # código do set (ex: "lea", "m21")
-    set_name: str                     # nome completo do set
-    rarity: str                       # common, uncommon, rare, mythic
-    mana_cost: Optional[str] = None   # custo de mana (ex: "{2}{B}{B}")
-    cmc: float = 0.0                  # custo de mana convertido (número)
-    type_line: str = ""               # tipo da carta (ex: "Creature — Dragon")
-    colors: list[str] = []            # cores da carta (ex: ["B", "R"])
-    prices: CardPrices                # preços — usa o modelo acima
+    id: str  # UUID único da carta na Scryfall
+    name: str  # nome da carta
+    set: str  # código do set (ex: "lea", "m21")
+    set_name: str  # nome completo do set
+    rarity: str  # common, uncommon, rare, mythic
+    mana_cost: str | None = None  # custo de mana (ex: "{2}{B}{B}")
+    cmc: float = 0.0  # custo de mana convertido (número)
+    type_line: str = ""  # tipo da carta (ex: "Creature — Dragon")
+    colors: list[str] = []  # cores da carta (ex: ["B", "R"])
+    prices: CardPrices  # preços — usa o modelo acima
 
     class Config:
         # Permite que campos extras da API sejam ignorados silenciosamente
         # Sem isso, Pydantic v2 levanta erro para campos desconhecidos
         extra = "ignore"
+
 
 # ─────────────────────────────────────────────────────────────
 # MODELO 3: Registro de preço para armazenamento
@@ -83,19 +86,21 @@ class CardPriceRecord(BaseModel):
     Este modelo 'achata' os dados para armazenamento eficiente.
     """
 
-    card_id: str                      # UUID da carta (chave de relacionamento)
-    card_name: str                    # nome da carta
-    set_code: str                     # código do set
-    set_name: str                     # nome do set
-    rarity: str                       # raridade
-    collected_at: date                # data da coleta — base do particionamento
-    usd: Optional[float] = None       # preço normal USD
-    usd_foil: Optional[float] = None  # preço foil USD
-    eur: Optional[float] = None       # preço normal EUR
-    eur_foil: Optional[float] = None  # preço foil EUR
+    card_id: str  # UUID da carta (chave de relacionamento)
+    card_name: str  # nome da carta
+    set_code: str  # código do set
+    set_name: str  # nome do set
+    rarity: str  # raridade
+    collected_at: date  # data da coleta — base do particionamento
+    usd: float | None = None  # preço normal USD
+    usd_foil: float | None = None  # preço foil USD
+    eur: float | None = None  # preço normal EUR
+    eur_foil: float | None = None  # preço foil EUR
 
     @classmethod
-    def from_scryfall_card(cls, card: ScryfallCard, collected_at: date) -> "CardPriceRecord":
+    def from_scryfall_card(
+        cls, card: ScryfallCard, collected_at: date
+    ) -> "CardPriceRecord":
         """
         Cria um CardPriceRecord a partir de um ScryfallCard.
 
@@ -114,4 +119,4 @@ class CardPriceRecord(BaseModel):
             usd_foil=card.prices.usd_foil,
             eur=card.prices.eur,
             eur_foil=card.prices.eur_foil,
-        )    
+        )

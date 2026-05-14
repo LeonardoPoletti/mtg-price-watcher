@@ -14,7 +14,6 @@ import httpx
 
 from collector.models import CardPriceRecord, ScryfallCard
 
-
 # ─────────────────────────────────────────────────────────────
 # CONSTANTES
 # ─────────────────────────────────────────────────────────────
@@ -31,12 +30,13 @@ REQUEST_DELAY = 0.1
 TIMEOUT_SECONDS = 30
 
 # Timeout para o download do bulk data (arquivo grande - pode demorar)
-BULK_DOWNLOAD_TIMEOUT = 300 # 5 minutos
+BULK_DOWNLOAD_TIMEOUT = 300  # 5 minutos
 
 
 # ─────────────────────────────────────────────────────────────
 # CLIENTE PRINCIPAL
 # ─────────────────────────────────────────────────────────────
+
 
 class ScryfallClient:
     """
@@ -52,7 +52,7 @@ class ScryfallClient:
         # Headers padrão para todas as requisições
         # Scryfall pede que você identifique seu projeto no User-Agent
         self.headers = {
-            "User-Agent": "mtg-price-watcher/0.1.0 (portifolio project)",
+            "User-Agent": "mtg-price-watcher/0.1.0 (portfolio project)",
             "Accept": "application/json",
         }
 
@@ -74,7 +74,7 @@ class ScryfallClient:
         Raises:
             httpx.HTTPStatusError: se a API retornar 4xx ou 5xx
             htppx.TimeoutException: se a requisição demorar demais
-        """    
+        """
         # Respeita o rate limit antes de cada requisição
         time.sleep(REQUEST_DELAY)
 
@@ -85,7 +85,7 @@ class ScryfallClient:
         response.raise_for_status()
 
         return response.json()
-    
+
     def get_bulk_data_url(self) -> str:
         """
         Consulta a Scryfall para obter a URL tual do arquivo bulk 'default_cards'.
@@ -109,9 +109,9 @@ class ScryfallClient:
                 size_mb = item["size"] / (1024 * 1024)
                 print(f"Arquivo encontrado: {size_mb:.1f} MB")
                 return url
-            
+
         raise ValueError("Tipo 'default_cards' não encontrado no bulk data endpoint")
-    
+
     def download_bulk_data(self, download_path: Path) -> Path:
         """
         Baixa o arquivo bulk data da Scryfall e salva localmente.
@@ -119,7 +119,7 @@ class ScryfallClient:
         Usa streaming para não carregar o arquivo inteiro na memória.
         O arquivo tem ~250mb descomprimedo - importante para o seu hardware.
 
-        Args: 
+        Args:
             download_path: diretório onde o arquivo será salvo
 
         Returns:
@@ -133,20 +133,17 @@ class ScryfallClient:
         if output_file.exists():
             print(f"Arquivo de hoje já existe: {output_file}")
             return output_file
-        
+
         print(f"Baixanod bulk data pra {output_file}...")
 
         # stream=True -> baixa em pedaçõs, não carrega tudo na memória
         with httpx.stream(
-            "GET",
-            url,
-            headers=self.headers,
-            timeout=BULK_DOWNLOAD_TIMEOUT
+            "GET", url, headers=self.headers, timeout=BULK_DOWNLOAD_TIMEOUT
         ) as response:
             response.raise_for_status()
 
             total = int(response.headers.get("content-length", 0))
-            downloaded= 0
+            downloaded = 0
 
             with open(output_file, "wb") as f:
                 for chunk in response.iter_bytes(chunk_size=8192):
@@ -156,12 +153,14 @@ class ScryfallClient:
                     # Monstra progress a cada 10MB
                     if total and downloaded % (10 * 1024 * 1024) < 8192:
                         pct = (downloaded / total) * 100
-                        print(f"  {pct:0f}% ({downloaded / 1024 / 1024:.0f}MB / {total / 1024 / 1024:.0f}MB)")
+                        print(
+                            f"  {pct:0f}% ({downloaded / 1024 / 1024:.0f}MB / {total / 1024 / 1024:.0f}MB)"
+                        )
 
         print(f"Download concluído: {output_file}")
         return output_file
-    
-    def perse_bulk_file(self, file_path: Path) -> list[CardPriceRecord]:
+
+    def parse_bulk_file(self, file_path: Path) -> list[CardPriceRecord]:
         """
         Lê o arquivo bulk JSON e converte para lista de CardPriceRecord.
 
@@ -193,14 +192,16 @@ class ScryfallClient:
             try:
                 # Valida com Pydantic - descarta cartas com dados inválidos
                 carta = ScryfallCard(**carta_bruta)
-                
+
                 # Só processa cartas que têm pelo menos um preço registrado
-                tem_preco = any([
-                    carta.prices.usd,
-                    carta.prices.usd_foil,
-                    carta.prices.eur,
-                    carta.prices.eur_foil,
-                ])
+                tem_preco = any(
+                    [
+                        carta.prices.usd,
+                        carta.prices.usd_foil,
+                        carta.prices.eur,
+                        carta.prices.eur_foil,
+                    ]
+                )
                 if not tem_preco:
                     continue
 
@@ -216,4 +217,4 @@ class ScryfallClient:
         print(f"Cartas com preço: {len(records)}")
         print(f"Catas ignoradas (sem preço ou erro): {erros}")
 
-        return records    
+        return records
