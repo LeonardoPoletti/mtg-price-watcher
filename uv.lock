@@ -433,6 +433,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "duckdb" },
     { name = "httpx" },
+    { name = "pandas" },
     { name = "plotly" },
     { name = "pydantic" },
     { name = "python-dotenv" },
@@ -449,6 +450,7 @@ dev = [
 requires-dist = [
     { name = "duckdb", specifier = ">=1.5.2" },
     { name = "httpx", specifier = ">=0.28.1" },
+    { name = "pandas", specifier = ">=3.0.3" },
     { name = "plotly", specifier = ">=6.7.0" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "python-dotenv", specifier = ">=1.2.2" },

@@ -17,6 +17,7 @@ keywords = ["data-engineering", "mtg", "duckdb", "streamlit", "scryfall"]
 dependencies = [
     "duckdb>=1.5.2",        # banco analítico embarcado — processa Parquet sem servidor
     "httpx>=0.28.1",        # cliente HTTP moderno — substitui requests
+    "pandas>=3.0.3",
     "plotly>=6.7.0",        # gráficos interativos no Streamlit
     "pydantic>=2.13.4",     # validação de dados na entrada da API
     "python-dotenv>=1.2.2", # carrega variáveis do arquivo .env
