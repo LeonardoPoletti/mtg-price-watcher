@@ -140,93 +140,97 @@ def get_top_cartas(n: int = 20, coluna_preco: str = "usd") -> list[dict]:
     colunas = ["card_name", "set_name", "rarity", "preco", "collected_at"]
     return [dict(zip(colunas, row)) for row in resultado]
 
-    def get_historico_carta(card_name: str) -> list[dict]:
-        """
-        Retorna o histórico de preços de uma carta específica ao longo do tempo.
 
-        Args:
-            card_name: nome exato da carta (ex: "Black Lotus")
+def get_historico_carta(card_name: str) -> list[dict]:
+    """
+    Retorna o histórico de preços de uma carta específica ao longo do tempo.
 
-        Returns:
-            Lista de dicionários com collected_at, usd, usd_foil, eur ordenados por data
-        """
-        parquet_glob = str(DATA_DIR / "*" / "cards.parquet")
+    Args:
+        card_name: nome exato da carta (ex: "Black Lotus")
 
-        conn = duckdb.connect()
+    Returns:
+        Lista de dicionários com collected_at, usd, usd_foil, eur ordenados por data
+    """
+    parquet_glob = str(DATA_DIR / "*" / "cards.parquet")
 
-        resultado = conn.execute(
-            f"""
-                                SELECT
-                                 collectec_at,
-                                 usd,
-                                 usd_foil,
-                                 eur,
-                                 eur_foil
-                                FROM '{parquet_glob}'
-                                WHERE card_name = ?
-                                ORDER BY collected_at ASC
-        """,
-            [card_name],
-        ).fetchall()
+    conn = duckdb.connect()
 
-        conn.close()
-
-        colunas = ["collected_at", "usd", "usd_foil", "eur", "eur_foil"]
-        return [dict(zip(colunas, row)) for row in resultado]
-
-    def get_variacao_preco(card_name: str) -> dict | None:
-        """
-        Returna a variação de preço de uma carta entre a primeira e a última coleta.
-
-        Returns:
-            Dicionário com preco_inicial, preco_final, variacao_absoluta,
-            variacao_percentual e datas. Retorna None se não houver dados suficientes.
-        """
-        historico = get_historico_carta(card_name)
-
-        # Precisa de pelo menos 2 pontos no tempo para calcular variação
-        if len(historico) < 2:
-            return None
-
-        primeiro = historico[0]
-        ultimo = historico[-1]
-
-        preco_inicial = primeiro["usd"]
-        preco_final = ultimo["usd"]
-
-        # Ambos precisam ter preço USD para calcular variação
-        if preco_inicial is None or preco_final is None:
-            return None
-
-        variacao_abs = preco_final = preco_inicial
-        variacao_pct = ((preco_final - preco_inicial) / preco_inicial) * 100
-
-        return {
-            "card_name": card_name,
-            "data_inicial": primeiro["collected_at"],
-            "data_final": ultimo["collected_at"],
-            "preco_inicial": preco_inicial,
-            "preco_final": preco_final,
-            "variacao_absoluta": round(variacao_abs, 2),
-            "variacao_percentual": round(variacao_pct, 2),
-        }
-
-    def listar_datas_disponiveis() -> list[date]:
-        """
-        Retorna todas as datas com dados coletados disponíveis.
-
-        Útil para o dashboard mostrar o ranking histórico disponível.
-        """
-        parquet_glob = str(DATA_DIR / "*" / "cards.parquet")
-
-        conn = duckdb.connect()
-
-        resultado = conn.execute(f"""
-            SELECT DISTINCT collected_at
+    resultado = conn.execute(
+        f"""
+            SELECT
+             collectec_at,
+             usd,
+             usd_foil,
+             eur,
+             eur_foil
             FROM '{parquet_glob}'
+            WHERE card_name = ?
             ORDER BY collected_at ASC
-        """).fetchall()
+    """,
+        [card_name],
+    ).fetchall()
 
-        conn.close()
+    conn.close()
 
-        return [row[0] for row in resultado]
+    colunas = ["collected_at", "usd", "usd_foil", "eur", "eur_foil"]
+
+    return [dict(zip(colunas, row)) for row in resultado]
+
+
+def get_variacao_preco(card_name: str) -> dict | None:
+    """
+    Returna a variação de preço de uma carta entre a primeira e a última coleta.
+
+    Returns:
+        Dicionário com preco_inicial, preco_final, variacao_absoluta,
+        variacao_percentual e datas. Retorna None se não houver dados suficientes.
+    """
+    historico = get_historico_carta(card_name)
+
+    # Precisa de pelo menos 2 pontos no tempo para calcular variação
+    if len(historico) < 2:
+        return None
+
+    primeiro = historico[0]
+    ultimo = historico[-1]
+
+    preco_inicial = primeiro["usd"]
+    preco_final = ultimo["usd"]
+
+    # Ambos precisam ter preço USD para calcular variação
+    if preco_inicial is None or preco_final is None:
+        return None
+
+    variacao_abs = preco_final - preco_inicial
+    variacao_pct = ((preco_final - preco_inicial) / preco_inicial) * 100
+
+    return {
+        "card_name": card_name,
+        "data_inicial": primeiro["collected_at"],
+        "data_final": ultimo["collected_at"],
+        "preco_inicial": preco_inicial,
+        "preco_final": preco_final,
+        "variacao_absoluta": round(variacao_abs, 2),
+        "variacao_percentual": round(variacao_pct, 2),
+    }
+
+
+def listar_datas_disponiveis() -> list[date]:
+    """
+    Retorna todas as datas com dados coletados disponíveis.
+
+    Útil para o dashboard mostrar o ranking histórico disponível.
+    """
+    parquet_glob = str(DATA_DIR / "*" / "cards.parquet")
+
+    conn = duckdb.connect()
+
+    resultado = conn.execute(f"""
+        SELECT DISTINCT collected_at
+        FROM '{parquet_glob}'
+        ORDER BY collected_at ASC
+    """).fetchall()
+
+    conn.close()
+
+    return [row[0] for row in resultado]
