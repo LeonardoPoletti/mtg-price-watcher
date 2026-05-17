@@ -92,7 +92,7 @@ def salvar_parquet(
 # ─────────────────────────────────────────────────────────────
 
 
-def get_top_cartas(n: int = 20, coluna_preco: str = "usd") -> list[dict]:
+def get_top_caras(n: int = 20, coluna_preco: str = "usd") -> list[dict]:
     """
     Returna as N cartas mais caras da útima coleta disponível.
 
@@ -158,7 +158,7 @@ def get_historico_carta(card_name: str) -> list[dict]:
     resultado = conn.execute(
         f"""
             SELECT
-             collectec_at,
+             collected_at,
              usd,
              usd_foil,
              eur,
