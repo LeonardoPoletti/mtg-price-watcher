@@ -33,7 +33,7 @@ mtg-price-watcher/
 │   │   └── duckdb_handler.py    ← leitura e escrita DuckDB + Parquet  ✅ FEITO
 │   └── dashboard/
 │       ├── __init__.py
-│       └── app.py               ← Streamlit dashboard                 🔄 PRÓXIMO
+│       └── app.py               ← Streamlit dashboard                 ✅ FEITO
 ├── data/
 │   └── raw/prices/YYYY-MM-DD/  ← Parquet particionado por data (não vai ao Git)
 ├── notebooks/                   ← exploração e testes manuais (não vai ao Git)
@@ -209,27 +209,44 @@ URL obtida: https://data.scryfall.io/default-cards/default-cards-20260513090849.
 
 ---
 
-### 🔄 ETAPA 6 — Dashboard — app.py (PRÓXIMO)
+### ✅ ETAPA 6 — Dashboard — app.py (CONCLUÍDA)
 
-- [ ] Estrutura básica do Streamlit (página única)
-- [ ] Tabela: top cartas mais caras
-- [ ] Gráfico: histórico de preço de uma carta (Plotly)
-- [ ] Filtros: moeda (usd/eur), quantidade de resultados
+**O que foi implementado:**
+
+Dashboard Streamlit completo com:
+- Sidebar com filtros de moeda (USD/EUR) e quantidade de cartas
+- Dataset info: primeira/última coleta e total de dias
+- Seção 1: Ranking das N cartas mais caras (tabela interativa)
+- Métricas: carta mais cara, preço médio, carta #1
+- Seção 2: Histórico de preço por carta com busca
+- Gráfico temporal interativo (Plotly)
+- Estatísticas de variação (inicial, atual, absoluta, percentual)
+
+**Conceitos aprendidos:**
+- Streamlit config: `st.set_page_config()` para título, ícone, layout
+- Widgets interativos: `st.sidebar.radio()`, `st.slider()`, `st.text_input()`
+- Tabelas formatadas: `st.dataframe()` com `column_config` para formatação de colunas
+- Gráficos Plotly: `px.line()` com customização de cores e hover
+- Métricas visuais: `st.metric()` para KPIs
+- Layout multi-coluna: `st.columns()` para organizar elementos lado a lado
+
+**Bug descoberto e corrigido:**
+- Chamadas múltiplas de `salvar_parquet()` para a mesma data sobrescrevem o arquivo
+- Solução: agrupar registros por data e salvar todos juntos
+- Lição: escritas em partições precisam garantir idempotência ou append
 
 ---
 
-### 📋 ETAPA 7 — Testes e Qualidade (PENDENTE)
+### 🔄 ETAPA 7 — README e Finalização (EM ANDAMENTO)
 
-- [ ] Escrever ao menos 1 teste com pytest em tests/
-- [ ] Garantir que Ruff passa em 100% dos arquivos
-- [ ] README.md completo com arquitetura e como rodar
+- [x] README.md completo com arquitetura e instruções
+- [ ] Screenshot do dashboard no README
+- [ ] Tag v1.0.0
 
 ---
 
 ### 📋 ETAPA 8 — Publicação (PENDENTE)
 
-- [ ] README.md com screenshot do dashboard
-- [ ] Tag v1.0.0
 - [ ] Post no LinkedIn
 
 ---
@@ -251,6 +268,7 @@ URL obtida: https://data.scryfall.io/default-cards/default-cards-20260513090849.
 | 2026-05-13 | Pandas como bridge Pydantic → DuckDB        | DuckDB não lê lista Python diretamente; DataFrame é o canal |
 | 2026-05-13 | `conn.register()` explícito no DuckDB       | Evitar dependência de escopo implícito — explícito é melhor |
 | 2026-05-13 | Particionamento por data no Parquet         | Permite reprocessar dia específico sem afetar os outros     |
+| 2026-05-13 | Agrupar registros por data antes de salvar  | Múltiplas escritas na mesma partição causam sobrescrita     |
 
 ---
 
@@ -267,8 +285,11 @@ fe580d6  docs: update project diary with progress through etapa 4
 9853265  style: apply ruff fixes - use X|None syntax and sort imports
 3c7138d  chore: add pandas as dependency for dataframe support
 70b24f9  feat: add duckdb handler for parquet storage and price queries
-(próximo) docs: update project diary with full progress etapas 1-5
-(próximo) feat: add streamlit dashboard
+a7cbd53  style: apply ruff fixes
+979eaab  docs: update diary with etapa 6 complete - streamlit dashboard
+9213fa7  feat: add streamlit dashboard with price ranking and history charts
+5f0c5ca  fix: correct duckdb handler logic and typo issues
+9341a98  feat: add dashboard assets and custom page icon
 ```
 
 ---
@@ -320,6 +341,10 @@ fe580d6  docs: update project diary with progress through etapa 4
 
 - Ruff F841 (variável não usada) revelou código implícito: DuckDB buscava `df`
   no escopo local via "mágica". Solução correta: `conn.register()` explícito.
+
+- **Idempotência de escritas em partições:** salvar múltiplos registros da mesma data
+  em chamadas separadas de `salvar_parquet()` sobrescreve o arquivo. Solução: agrupar
+  todos os registros daquela data e salvar uma única vez.
 
 ---
 
